@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winkie WebApp Calendar</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div id="header">
+        <div id="monthOfYear"></div>
+        <div>
+          <button id="previousMonth">Previous month</button>
+          <button id="nextMonth">Next month</button>
+          <a href="https://www.gov.hk/tc/about/abouthk/holiday/">
+          <button id="checkForHoliday">Check Public Holiday</button>
+          </a>
+        </div>
+      </div>
+
+      <div id="daysOfWeek">
+        <div>Sun</div>
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thur</div>
+        <div>Fri</div>
+        <div>Sat</div>
+      </div>
+
+      <div id="calendar"></div>
+    </div>
+
+    <div id="createNewEvent">
+      <h2>Create New Event</h2>
+
+      <input id="inputEventName" placeholder="Event Name" />
+
+      <button id="saveEvent">Save</button>
+      <button id="cancelAction">Cancel</button>
+    </div>
+
+    <div id="deleteExistingEvent">
+      <h2>Event of the day</h2>
+
+      <p id="eventDetail"></p>
+
+      <button id="deleteEvent">Delete</button>
+      <button id="closeWindow">Close</button>
+    </div>
+
+    <div id="calendarBackground"></div>
+  </body>
+  
+<script>
+    let nav = 0;
+    let clicked = null;
+    let events = [];
+    const localStorageEvents = localStorage.getItem('events');
+    if (localStorageEvents) {
+        events = JSON.parse(localStorageEvents);
+    }
+
+    function getElementById(id) {
+    return document.getElementById(id);
+    }
+
+    const calendar = getElementById('calendar');
+    const createNewEvent = getElementById('createNewEvent');
+    const deleteExistingEvent = getElementById('deleteExistingEvent');
+    const backDrop = getElementById('calendarBackground');
+    const inputEventName = getElementById('inputEventName');
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    function openDate(date) {
+        clicked = date;
+
+        const eventForDay = identifyDailyEvent(clicked);
+
+        if (eventForDay) {
+            textOfElement('eventDetail', eventForDay.title);
+            displayOfElement(deleteExistingEvent, 'block');
+        } else {
+            displayOfElement(createNewEvent, 'block');
+        }
+
+        displayOfElement(backDrop, 'block');
+    }
+
+    function identifyDailyEvent(date) {
+        for (let i = 0; i < events.length; i++) {
+            if (events[i].date === date) {
+                return events[i];
+            }
+        }
+        return undefined;
+    }
+
+    function textOfElement(elementId, text) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.innerText = text;
+        }
+    }   
+
+    function displayOfElement(element, displayValue) {
+        if (element && element.style) {
+        element.style.display = displayValue;
+        }
+    }
+    
+    function load() {
+        const d = new Date();
+
+        if (nav !== 0) {
+            d.setMonth(new Date().getMonth() + nav);
+        }
+
+        const year = d.getFullYear();
+        const month = d.getMonth();
+        const day = d.getDate();
+             
+
+        const monthStartDay = new Date(year, month, 1);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();  
+        const dateInTextFormat = monthStartDay.toLocaleDateString( 'en-us',{
+            weekday: 'long',
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+        });
+        const emptyDaySquare = daysOfWeek.indexOf(dateInTextFormat.split(', ')[0]);
+
+        document.getElementById('monthOfYear').innerText = 
+            `${d.toLocaleDateString('en-us', { month: 'long' })} ${year}`;
+
+        calendar.innerHTML = '';
+
+        for(let i = 1; i <= emptyDaySquare + daysInMonth; i++) {
+            const daySquare = document.createElement('div');
+            daySquare.classList.add('day');
+
+            const dayString = `${month + 1}/${i - emptyDaySquare}/${year}`;
+
+            if (i > emptyDaySquare) {
+                daySquare.innerText = i - emptyDaySquare;
+                const eventForDay = events.find(e => e.date === dayString);
+
+            if (i - emptyDaySquare === day && nav === 0) {
+                daySquare.id = 'currentDay';
+            }
+
+            if (eventForDay) {
+                const eventDiv = document.createElement('div');
+                eventDiv.classList.add('event');
+                eventDiv.innerText = eventForDay.title;
+                daySquare.appendChild(eventDiv);
+            }
+
+            daySquare.addEventListener('click', () => openDate(dayString));
+        } else {
+            daySquare.classList.add('padding');
+        }
+
+        calendar.appendChild(daySquare);    
+        }
+    }
+
+function closeModal() {
+  inputEventName.classList.remove('error');
+  createNewEvent.style.display = 'none';
+  deleteExistingEvent.style.display = 'none';
+  backDrop.style.display = 'none';
+  inputEventName.value = '';
+  clicked = null;
+  load();
+}
+
+function saveEvent() {
+  if (inputEventName.value) {
+    inputEventName.classList.remove('error');
+
+    events.push({
+      date: clicked,
+      title: inputEventName.value,
+    });
+
+    localStorage.setItem('events', JSON.stringify(events));
+    closeModal();
+  } else {
+    inputEventName.classList.add('error');
+  }
+}
+
+function deleteEvent() {
+  events = events.filter(e => e.date !== clicked);
+  localStorage.setItem('events', JSON.stringify(events));
+  closeModal();
+}
+
+function initButtons() {
+  document.getElementById('nextMonth').addEventListener('click', () => {
+    nav++;
+    load();
+  });
+
+  document.getElementById('previousMonth').addEventListener('click', () => {
+    nav--;
+    load();
+  });
+
+  document.getElementById('saveEvent').addEventListener('click', saveEvent);
+  document.getElementById('cancelAction').addEventListener('click', closeModal);
+  document.getElementById('deleteEvent').addEventListener('click', deleteEvent);
+  document.getElementById('closeWindow').addEventListener('click', closeModal);
+}
+
+initButtons();
+load();
+  </script>
+
+  <style>
+body {
+  display: flex;
+  margin-top: 100px;
+  justify-content: center;
+  background-color: hsl(300, 100%, 95%);
+}
+
+#header {
+  font-family: "Lucida Handwriting", cursive;
+  color: rgb(204, 81, 101);
+  padding: 30px;
+  font-size: 45px;
+  display: flex;
+  text-align: center;
+  margin-right: 10px;
+}
+
+button{
+  width: 150px;
+  height: 50px;
+  font-size: 15px;
+  cursor: pointer;
+  border: 3px dashed white;
+  padding: 5px;
+  border-radius: 10px;
+  color: white;
+  background-color: rgb(168, 143, 200) ;
+}
+
+#container {
+  width: 800px;
+}
+#daysOfWeek {
+  color: #8d00b1;
+  font-family: "Lucida Console", monospace;
+  width: 100%;
+  display: flex;
+  
+}
+#daysOfWeek div {
+  width: 200px;
+  padding: 10px;
+}
+#calendar {
+  width: 100%;
+  margin: auto;
+  display: flex;
+  flex-wrap: wrap;
+}
+.day {
+  width: 100px;
+  padding: 10px;
+  height: 100px;
+  cursor: pointer;
+  box-sizing: border-box;
+  background-color: rgb(250, 240, 230);
+  margin-top: 5px;
+  margin-bottom: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 5px;
+  border: 2px solid rgb(80, 57 ,49);
+}
+.day:hover {
+  background-color: rgb(203, 158, 117);
+}
+
+.day + #currentDay {
+  background-color:rgb(255, 216, 209);
+}
+
+.event {
+  font-size: 12px;
+  padding: 2px;
+  background-color: rgb(219, 112, 147);
+  color: white;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+#createNewEvent, #deleteExistingEvent {
+  display: none;
+  z-index: 15;
+  padding: 20px;
+  background-color: rgb(255,192,203);
+  border-radius: 10px;
+  border: 5px dotted #d36c6c;
+  width: 400px;
+  top: 120px;
+  position: absolute;
+  font-family: "Lucida Console", monospace;
+  color: rgb(80, 57 ,49);
+}
+#inputEventName {
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  border: 1px, solid grey;
+}
+
+#cancelAction, #deleteEvent {
+  background-color:white;
+  border:3px solid #d36c6c;
+  color: #d36c6c;
+}
+
+#saveEvent, #closeWindow {
+  background-color: white;
+  border:3px solid #92a1d1;
+  color: #92a1d1;
+}
+#eventDetail {
+  font-size: 15px;
+}
+
+#calendarBackground {
+  display: none;
+  top: 0px;
+  left: 0px;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  background-color: rgba(255, 211, 211, 0.8);
+}
+  </style>
+</html>
