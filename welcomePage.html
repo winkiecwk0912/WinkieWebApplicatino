@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myWebAppHome</title>
+</head>
+<body>
+    <h1>Welcome to my calendar</h1>
+    <img src="calendar.jpg" width="300px">
+    <button onclick="window.location.href = 'https://winkiecwk0912.github.io/WinkieWebApplication/webCalendar.html';">Click for entry</button>
+</body>
+<style>
+    h1{
+        font-family:"Lucida Handwriting", cursive ;
+        padding-top: 100px;
+        color: #d36c6c;
+        text-align: center;
+    }
+
+    button{
+        position:absolute;
+        left:45%;
+        height:50px;
+        width:200px;
+        border-radius: 5px;
+        border: 3px solid #d36c6c;
+        color: #d36c6c;
+        font-size: larger;
+        background-color: rgb(250, 240, 230);
+        margin-top:350px;
+        transition:background-color color border 1s;
+    }
+
+    body{
+        background-color: hsl(300, 100%, 95%);
+    }
+
+    img{
+        position: absolute;
+        margin-top: 20px;
+        left:42%;
+    }
+    img:hover {
+        -webkit-transform: scaleX(-1);
+        transform: scaleX(-1);
+    }
+
+    button:hover{
+        cursor:pointer;
+        background-color: rgb(203, 158, 117);
+        color: rgb(80, 57 ,49);
+        border: 3px solid rgb(80, 57 ,49);
+    }
+</style>
+</html>
